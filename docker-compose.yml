@@ -1,0 +1,53 @@
+version: '3.8'
+
+networks:
+  home-lab-network:
+    name: home-lab-network
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.99.0/24
+          gateway: 192.168.99.1
+
+services:
+  ui:
+    container_name: homelab-ui
+    build:
+      dockerfile: Dockerfile
+      context: ./home-lab-client
+    ports:
+      - 4200:80
+    links:
+      - api
+
+  api:
+    container_name: homelab-api
+    build:
+      dockerfile: Dockerfile
+      context: ./home-lab-server
+    depends_on:
+      - db
+    ports:
+      - 3030:3030
+    networks:
+      - home-lab-network
+
+  db:
+    container_name: homelab-db
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_DATABASE: homelab
+    ports:
+      - 27017:27017
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - home-lab-network
+
+volumes:
+  mongo-data:
+  api:
